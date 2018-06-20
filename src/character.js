@@ -18,7 +18,7 @@ class Character extends React.Component{
 
     componentDidMount() {
         Promise.all([
-            axios.get("http://ffrkapi.azurewebsites.net/api/v1.0/Characters/192")
+            axios.get("http://ffrkapi.azurewebsites.net/api/v1.0/Characters/74")
         ]).then(([chr]) => {
             this.setState({
                 items: chr.data,
@@ -30,8 +30,9 @@ class Character extends React.Component{
     
     render(){
         const { items, loading } = this.state;
-        const stat = items.map(chr => chr.StatsByLevelInfos);
-        console.log(stat[0])
+        const stat = items.map(item => item.StatsByLevelInfos);
+        const relic = items.map(item => item.Relics);
+
         const statColumn = [{
             title: 'Level',
             dataIndex: 'Level',
@@ -73,7 +74,7 @@ class Character extends React.Component{
             dataIndex: 'Speed',
             key: 'spd'
         }];
-        
+
         if(loading == true){
             return (
                 <div>
@@ -81,6 +82,48 @@ class Character extends React.Component{
                 </div>
             );
         }
+
+        const soulBreak = relic[0].map(sb => sb.SoulBreak);
+        const soulBreakColumn = [{
+            title: 'Image',
+            dataIndex: 'ImagePath',
+            render: (ImagePath) => {
+                let correctUrl = ImagePath.slice(0, ImagePath.indexOf('\"'));
+
+                return <img className="abilityImage" src={correctUrl} alt={soulBreak.SoulBreakName} />;
+            },
+            key: 'imagePath'
+        }, {
+            title: 'Soul Break Name',
+            dataIndex: 'SoulBreakName',
+            key: 'SoulBreakName'
+        }, {
+            title: 'Japanese Name',
+            dataIndex: 'JapaneseName',
+            key: 'JapaneseName'
+        }, {
+            title: 'Effects',
+            dataIndex: 'Effects',
+            key: 'Effects'
+        }, {
+            title: 'Multiplier',
+            dataIndex: 'Multiplier',
+            key: 'Multiplier'
+        }];
+
+        // function to clean[delete] data from array
+        Array.prototype.clean = function(deleteValue) {
+            for (var i = 0; i < this.length; i++) {
+                if (this[i] == deleteValue) {         
+                    this.splice(i, 1);
+                    i--;
+                }
+            }
+            return this;
+        };
+
+        // Clean null data from soul break array, since some relic contains Legend Materia data so it is normal that SB should be null
+        soulBreak.clean(null)
 
         return (
             <div>
@@ -90,10 +133,11 @@ class Character extends React.Component{
                 <Row gutter={16}>
                     <Col span={12}><Table {...this.state} dataSource={stat[0]} columns={statColumn} rowKey={item => item.Level} size="small" /></Col>
                 </Row>
-                
-
                 <br/><br/>
                 <h2 align="left">Soul Breaks</h2>
+                <Row gutter={16}>
+                    <Table {...this.state} dataSource={soulBreak} columns={soulBreakColumn} size="small"/>
+                </Row>
             </div>
         );
     }
